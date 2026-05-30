@@ -2,8 +2,36 @@
 //  CONSTANTS & TYPES
 // ════════════════════════════════════════════════
 export const TS_TYPES = ['string', 'number', 'Date', 'boolean', 'any'];
-export const JAVA_TYPES = ['String', 'Long', 'Integer', 'Double', 'BigDecimal', 'LocalDateTime', 'LocalDate', 'Date', 'Boolean', 'Object', 'List', 'Set'];
+export const JAVA_TYPES = [
+  'String',
+  'Long',
+  'Integer',
+  'Double',
+  'BigDecimal',
+  'LocalDateTime',
+  'LocalDate',
+  'LocalTime',
+  'Date',
+  'Boolean',
+  'Object',
+  'List',
+  'Set'
+];
+const EXACT_TYPE_MAP = {
+  VERSION: 'Long',
 
+  CREATE_BY: 'String',
+  UPDATE_BY: 'String',
+
+  CREATE_DATE: 'LocalDateTime',
+  UPDATE_DATE: 'LocalDateTime',
+
+  ROW_STATUS: 'String',
+  RECORD_STATUS: 'String',
+
+  DELETE_FLAG: 'String',
+  ACTIVE_FLAG: 'String',
+};
 // Reserved keywords that must not be used as field names
 export const TS_RESERVED = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete',
@@ -30,9 +58,12 @@ export const BOOL_FALSE_POSITIVE_SUFFIXES = /^(DATE|DN|DT|SN|ID|NO|NUM|SUANCE|SU
 // ════════════════════════════════════════════════
 export function toCamelCase(str) {
   if (str.includes('_')) {
-    return str.toLowerCase().replace(/[_]+(.)/g, (_, c) => c.toUpperCase());
+    return str
+      .toLowerCase()
+      .replace(/_+(.)/g, (_, c) => c.toUpperCase());
   }
-  return str.charAt(0).toLowerCase() + str.slice(1);
+
+  return str.toLowerCase();
 }
 
 export function toPascalCase(str) {
@@ -72,15 +103,25 @@ export function inferTypeTs(col) {
 
 export function inferTypeJava(col) {
   const u = col.toUpperCase();
-  if (isBooleanColumn(u)) return 'Boolean';
-  if (/_ID$/.test(u)) return 'Long';
-  if (/(_NO$|VERSION$|_COUNT$|_QTY$|_SEQ$)/.test(u)) return 'Integer';
-  if (/(_DATE$|_AT$|_DATETIME$|_DT$)/.test(u)) return 'LocalDateTime';
-  if (/_TIME$/.test(u)) return 'LocalDateTime';
-  if (/_DATE_ONLY$/.test(u)) return 'LocalDate';
-  if (/(_AMOUNT$|_PRICE$|_TOTAL$|_BALANCE$|_RATE$)/.test(u)) return 'BigDecimal';
-  if (/(_EMAIL$|_MAIL$)/.test(u)) return 'String';
-  if (/_CODE$/.test(u)) return 'String';
+
+  if (EXACT_TYPE_MAP[u]) return EXACT_TYPE_MAP[u];
+
+  if (/^(IS_|HAS_|CAN_)/.test(u)) return 'Boolean';
+
+  if (/(_FLAG$|_YN$|_IND$|_SW$|_ACTIVE$|_ENABLE$|_DISABLE$|_USE_YN$)/.test(u)) {
+    return 'String';
+  }
+
+  if (/(_ID$|_GEN$|_KEY$|_PK$|_FK$)/.test(u)) return 'Long';
+  if (/(_NO$|_SEQ$|_COUNT$|_CNT$|_QTY$|_NUM$|_LEVEL$|_STEP$|_ORDER$)/.test(u)) return 'Integer';
+  if (/(_AMT$|_AMOUNT$|_PRICE$|_TOTAL$|_BALANCE$|_RATE$|_PERCENT$|_PCT$|_TAX$|_VAT$|_FEE$|_COST$)/.test(u)) {
+    return 'BigDecimal';
+  }
+
+  if (/(_DATETIME$|_TIMESTAMP$|CREATE_DATE$|UPDATE_DATE$|_AT$)/.test(u)) return 'LocalDateTime';
+  if (/(_DATE$|BIRTH_DATE$|START_DATE$|END_DATE$|EFF_DATE$|EXP_DATE$)/.test(u)) return 'LocalDate';
+  if (/(_TIME$|_TM$)/.test(u)) return 'LocalTime';
+
   return 'String';
 }
 
